@@ -1,0 +1,58 @@
+1) Display Persons age on .html with css classes applied using [ngClass]
+	- boy : Less than 20
+	- men : Between 21 to 60
+	- old : above 60
+
+	<span [ngClass]="{
+    			   'boy': person.age < 20,
+    			   'men': person.age <= 60,
+			   'old': person.age > 60
+  			}">{{ person.name }} ({{ person.age }})
+  	</span>
+
+
+
+2) Display "Data is loading......" message message on product list component. After loading the data from RESTApi message should be invisible.
+
+3)Validations
+ 	a) Name should be with the specified length range ie minimum 10 and maximum 20 characters.
+		i)  Template Driven Forms	minLength="10"  maxLength="20"
+		ii) Reactive Forms		Validators.minLength(10),Validators.maxLength(20)
+
+ 	b) Age should be with the specified value range ie minimum 18 and maximum 100
+		i)  Template Driven Form	min="18" max="100"
+		ii) Reactive Forms		Validators.min(18), Validators.max(100)
+
+	c) Phone number should be of 10 digits using pattern
+		i)  Template Driven Form	pattern="[0-9]{10}"
+						pattern=/^\d{10}$/
+
+		ii) Reactive Forms		Validators.pattern(/^\d{10}$/)
+						Validators.pattern("[0-9]{10}")
+
+	d) Gender should be either "Male", "Female" or "Others" using pattern
+		Validators.pattern('^(Male|Female|Others)$')
+		
+
+	e) Accept startDate and endDate date. endDate should be minimum 2 years greater then the startDate
+		startDate : Date;
+		endDate : Date			Validators.min(Date.parse(startDate).getFullYear()+2)
+		
+
+	f) expire year
+		year=new Date().getFullYear();
+		year:['',[Validators.min(1900),Validators.max(this.year+2)]]
+
+	g) Check expire
+		checkExpiry(expiry: any){
+    			let exp = Date.parse(expiry);    
+    			let currDate = Date.now();    
+    			if(exp < currDate) {    
+     				return 'Yes'    
+    			}else{ 
+    				return 'No';    
+    			}
+
+	i) Date (dd/mm/yyyy)
+		pattern=/^\d{2}//\d{2}//\d{4}$/
+
