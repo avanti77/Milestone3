@@ -1,0 +1,613 @@
+AddProductComponent.ts
+----------------------
+import { Component, OnInit } from '@angular/core';
+import { ProductService } from '../services/product.service';
+import { Router } from '@angular/router';
+import { Product } from '../model/product.model';
+
+@Component({
+  selector: 'app-add-product',
+  templateUrl: './add-product.component.html',
+  styleUrls: ['./add-product.component.css']
+})
+export class AddProductComponent implements OnInit {
+
+  product : Product = {name : "",category : "", price : 0};
+
+  constructor(private service : ProductService, private router : Router) { }
+
+  ngOnInit(): void {
+  }
+
+  public addProduct(){
+    this.service.addProduct(this.product).subscribe(data=>{
+      this.router.navigate(['/products'])
+    })
+  }
+
+}
+-----------------------------------------------------------------------------------
+AddProductComponent.html
+----------------------
+
+<div class="container">
+    <h2>Add Product</h2>
+    <form (ngSubmit)="addProduct()">
+        <div class="form-group">
+            <label for="productName">Product Name:</label>
+            <input  [(ngModel)]="product.name" 
+                    required
+                    minlength="5"
+                    maxlength="25"
+                    pattern="[a-zA-Z ]*"
+                    #name="ngModel"
+                    type="text" 
+                    name="name" 
+                    id="productName" 
+                    class="form-control">
+            <div class="alert alert-danger error-message" *ngIf="name.invalid && name.touched" >
+                <div *ngIf="name.errors['required']">Name is required</div>
+                <div *ngIf="name.errors['minlength']">Name should have minimum of 5 characters</div>
+                <div *ngIf="name.errors['maxlength']">Name should have maximum of 25 characters</div>
+                <div *ngIf="name.errors['pattern']">Name should have only alphabets and space</div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="productCategory">Product Category:</label>
+            <input  [(ngModel)]="product.category" 
+                    required
+                    type="text" 
+                    name="category" 
+                    id="productCategory" 
+                    class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="productPrice">Product Price:</label>
+            <input  
+                    [(ngModel)]="product.price" 
+                    required
+                    min="0"
+                    type="text" name="price" id="productPrice" class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="productDescription">Product Description:</label>
+            <input [(ngModel)]="product.description" type="text" name="description" id="productDescription" class="form-control">
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
+
+<div class="container">
+    <form (ngSubmit)="addProduct()">
+        <table>
+            <tbody>
+                <tr>
+                    <td>
+                        <label for="name">Name:</label>
+                    </td>
+                    <td>
+                        <input [(ngModel)]="product.name" type="text" name="name" id="name">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="category">Category:</label>
+                    </td>
+                    <td>
+                        <input [(ngModel)]="product.category" type="text" name="category" id="category">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="price">Price:</label>
+                    </td>
+                    <td>
+                        <input [(ngModel)]="product.price" type="text" name="price" id="price">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="description">Description:</label>
+                    </td>
+                    <td>
+                        <input [(ngModel)]="product.description" type="text" name="description" id="description">
+                    </td>
+                </tr>
+                <tr>
+                    <button type="submit">Add Product</button>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+-------------------------------------------------------------------------------------------------------
+
+EditProductComponent.ts
+-----------------------
+
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ProductService } from '../services/product.service';
+import { Product } from '../model/product.model';
+
+
+@Component({
+  selector: 'app-edit-product',
+  templateUrl: './edit-product.component.html',
+  styleUrls: ['./edit-product.component.css']
+})
+export class EditProductComponent implements OnInit {
+
+  productForm : FormGroup;
+  productId : number;
+
+  constructor(private fb : FormBuilder,
+              private router : Router, 
+              private activatedRoute : ActivatedRoute,
+              private service : ProductService) { 
+
+    this.productForm = fb.group({
+      name : fb.control("",[Validators.required,
+                            Validators.minLength(5),
+                            Validators.maxLength(25),
+                            Validators.pattern("[a-zA-Z ]*")]),
+      category : fb.control("",Validators.required),
+      price : fb.control("",[Validators.required,Validators.min(0)]),
+      description : fb.control("",Validators.required)
+    })
+  }
+
+  public get name() : FormControl{
+    return this.productForm.get("name") as FormControl;
+  }
+
+  public get category() : FormControl{
+    return this.productForm.get("category") as FormControl;
+  }
+
+  public get price() : FormControl{
+    return this.productForm.get("price") as FormControl;
+  }
+
+  public get description() : FormControl{
+    return this.productForm.get("description") as FormControl;
+  }
+
+  ngOnInit(): void {
+    
+    // this.productId = parseInt(this.activatedRoute.snapshot.paramMap.get("id"));
+    // this.service.getProductById(this.productId).subscribe(data=>{
+    //   // this.productForm.setValue(data);
+    //   this.name.setValue(data.name);
+    //   this.category.setValue(data.category);
+    //   this.price.setValue(data.price);
+    //   this.description.setValue(data.description);
+    // })
+
+
+    this.activatedRoute.paramMap.subscribe(params=>{
+      this.productId = parseInt(params.get("id"));
+      this.service.getProductById(this.productId).subscribe(data=>{
+        this.name.setValue(data.name);
+        this.category.setValue(data.category);
+        this.price.setValue(data.price);
+        this.description.setValue(data.description);
+      })
+
+    })
+
+
+  }
+
+  public updateProduct(){
+
+    let product : Product = this.productForm.value
+    console.log(product)
+    this.service.updateProduct(this.productId,product).subscribe(data=>{
+      this.router.navigate(['/products'])
+    })
+
+  }
+
+}
+
+-------------------------------------------------------------------------------------------------------
+
+EditProductComponent.html
+-----------------------
+
+<div class="container">
+    <h2>Edit Product</h2>
+    <form [formGroup]="productForm" (ngSubmit)="updateProduct()">
+        <table>
+            <tbody>
+                <tr>
+                    <td>
+                        <label for="name">Name:</label>
+                    </td>
+                    <td>
+                        <input formControlName="name" type="text" name="name" id="name">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="category">Category:</label>
+                    </td>
+                    <td>
+                        <input formControlName="category" type="text" name="category" id="category">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="price">Price:</label>
+                    </td>
+                    <td>
+                        <input formControlName="price" type="text" name="price" id="price">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label for="description">Description:</label>
+                    </td>
+                    <td>
+                        <input formControlName="description" type="text" name="description" id="description">
+                    </td>
+                </tr>
+                <tr>
+                    <button type="submit">Edit Product</button>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</div>
+
+
+
+-------------------------------------------------------------------------------------------------------
+
+product.model.ts
+-----------------------
+
+
+export interface Product {
+    id ?: number;
+    name ?: string;
+    category ?: string;
+    price ?: number;
+    description ?: string;
+}
+
+
+
+-------------------------------------------------------------------------------------------------------
+
+ProductListComponent.ts
+-----------------------
+
+import { Component, OnInit } from '@angular/core';
+import { ProductService } from '../services/product.service';
+import { Product } from '../model/product.model';
+
+@Component({
+  selector: 'app-product-list',
+  templateUrl: './product-list.component.html',
+  styleUrls: ['./product-list.component.css']
+})
+export class ProductListComponent implements OnInit {
+
+  products : Product[] = [];
+  priceSortToggle : boolean = true;
+  nameSortToggle : boolean = true;
+  sortBy : string = "";
+  searchData : string = "";
+
+  constructor(private service : ProductService) { }
+
+  ngOnInit(): void {
+    this.getAllProducts();
+  }
+
+  public getAllProducts(){
+    this.service.getAllProducts().subscribe(data=>{
+      this.products = data;
+    })
+  }
+
+  public deleteProduct(id : number) {
+    this.service.deleteProduct(id).subscribe(data=>{
+      this.getAllProducts();
+    })
+  }
+
+  public sortByPrice(){
+    if(this.priceSortToggle)
+      this.products.sort((p1,p2)=>p1.price - p2.price)
+    else
+      this.products.sort((p1,p2)=>p2.price - p1.price);
+    
+    this.priceSortToggle = !this.priceSortToggle;
+  }
+
+  public sortByName(){
+    if(this.nameSortToggle){
+      this.products.sort((p1,p2)=>p1.name.localeCompare(p2.name));
+    }else{
+      this.products.sort((p1,p2)=>p2.name.localeCompare(p1.name))
+    }
+
+    this.nameSortToggle = !this.nameSortToggle;
+  }
+
+  public sortProductsBy(){
+    if(this.sortBy == 'name'){
+      this.sortByName();
+    }else if(this.sortBy == "price"){
+      this.sortByPrice();
+    }
+  }
+
+  public searchProduct(){
+    
+      this.service.getAllProducts().subscribe(data=>{
+        this.products = data;
+        if(this.searchData.trim().length != 0){
+          this.products = this.products.filter(p=>p.name.toLowerCase().includes(this.searchData.toLowerCase()));
+        }
+      })
+  }
+
+  public searchByAllField(){
+    this.service.getAllProducts().subscribe(data=>{
+      this.products = data;
+      if(this.searchData.trim().length != 0){
+        this.products = this.products.filter(prod => JSON.stringify(prod).toLowerCase().includes(this.searchData.toLowerCase()))
+      }
+    })
+  }
+}
+
+
+-------------------------------------------------------------------------------------------------------
+
+ProductListComponent.html
+-----------------------
+
+
+<div class="container">
+    <h2>Product List</h2>
+    <a [routerLink]="['/products/add']">Add Product</a>
+    <ul *ngIf="products">
+        <li *ngFor="let p of products | sorting">
+            {{p.name}} - {{p.category}}
+            <a class="btn btn-primary" [routerLink]="['/products/view',p.id]">View</a>
+            <a class="btn btn-primary" [routerLink]="['/products/edit',p.id]">Edit</a>
+            <a class="btn btn-danger" (click)="deleteProduct(p.id)">Delete</a>
+        </li>
+    </ul>
+    <p *ngIf="!products">No products available</p>
+</div>
+
+<div class="container">
+    <div>
+        <select [(ngModel)]="sortBy" name="sortBy" id="sortBy">
+            <option value="name">Name</option>
+            <option value="category">Category</option>
+            <option value="price">Price</option>
+        </select>
+        <button (click)="sortProductsBy()">Sort</button>
+    </div>
+    <div>
+        Search Data : <input [(ngModel)]="searchData" (input)="searchByAllField()" type="text" name="searchData" id="searchData">
+        <button (click)="searchProduct()">Search</button>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th (click)="sortByName()">Name</th>
+                <th>Category</th>
+                <th (click)="sortByPrice()">Price</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let pd of products">
+                <td>{{pd.name}}</td>
+                <td>{{pd.category}}</td>
+                <td>{{pd.price}}</td>
+                <td>
+                    <a class="btn btn-primary" [routerLink]="['/products/view',pd.id]">View</a>
+                    <a class="btn btn-primary" [routerLink]="['/products/edit',pd.id]">Edit</a>
+                    <a class="btn btn-danger" (click)="deleteProduct(pd.id)">Delete</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="container">
+    <div class="product-item" *ngFor="let prod of products">
+        <p>Name: {{prod.name}}</p>
+        <p>Category: {{prod.category}}</p>
+        <p>
+            <a class="btn btn-primary" [routerLink]="['/products/view',prod.id]">View</a>
+            <a class="btn btn-primary" [routerLink]="['/products/edit',prod.id]">Edit</a>
+            <a class="btn btn-danger" (click)="deleteProduct(prod.id)">Delete</a>
+        </p>
+    </div>
+</div>
+
+
+-------------------------------------------------------------------------------------------------------
+ProductListComponent.css
+-----------------------
+
+
+.container{
+    border : 2px solid black;
+    padding: 10px;
+    margin: 20px;
+}
+
+.product-item{
+    border : 1px solid blue;
+    padding: 10px;
+    margin: 20px;
+}
+
+
+
+-------------------------------------------------------------------------------------------------------
+
+ProductService.ts
+-----------------------
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Product } from '../model/product.model';
+
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProductService {
+
+  public baseUrl : string = "https://ide-ffecbdcfbbfccf332141306abecbaadaccedtwo.premiumproject.examly.io/proxy/3001/product"
+
+  constructor(private http : HttpClient) { }
+
+  public getAllProducts() : Observable<Product[]>{
+    return this.http.get(this.baseUrl) as Observable<Product[]>;
+  }
+
+  public addProduct(product) : Observable<Product> {
+    return this.http.post(this.baseUrl,product) as Observable<Product>;
+  }
+
+  public updateProduct(id :number, product : Product) : Observable<Product>{
+    return this.http.put(this.baseUrl+"/"+id,product) as Observable<Product>;
+  }
+
+  public deleteProduct(id : number) : Observable<any> {
+    return this.http.delete(this.baseUrl+"/"+id) as Observable<any>;
+  }
+
+  public getProductById(id : number) : Observable<Product>{
+    return this.http.get(this.baseUrl+"/"+id) as Observable<Product>;
+  }
+}
+
+
+
+
+-------------------------------------------------------------------------------------------------------
+
+ViewProductComponent.ts
+-----------------------
+
+
+import { Component, OnInit } from '@angular/core';
+import { Product } from '../model/product.model';
+import { ProductService } from '../services/product.service';
+import { ActivatedRoute, Router } from '@angular/router';
+
+@Component({
+  selector: 'app-view-product',
+  templateUrl: './view-product.component.html',
+  styleUrls: ['./view-product.component.css']
+})
+export class ViewProductComponent implements OnInit {
+
+  product : Product = {};
+
+  constructor(private service : ProductService,private router : Router,private activatedRoute : ActivatedRoute) { }
+
+  ngOnInit(): void {
+      this.activatedRoute.paramMap.subscribe(params=>{
+        let id = parseInt(params.get("id"));
+        this.service.getProductById(id).subscribe(data=>{
+          this.product = data;
+        })
+      })
+  }
+
+  public onClose(){
+    this.router.navigate(['/products'])
+  }
+
+}
+
+
+
+-------------------------------------------------------------------------------------------------------
+
+ViewProductComponent.html
+-----------------------
+
+<div class="container">
+    <h2>View Product</h2>
+    <p>Product Id: {{product.id}}</p>
+    <p>Product Name: {{product.name}}</p>
+    <p>Product Category : {{product.category}}</p>
+    <p>Product Price : {{product.price}}</p>
+    <p>Prduct Description: {{product.description}}</p>
+    <br>
+    <button (click)="onClose()">Close</button>
+</div>
+
+
+-------------------------------------------------------------------------------------------------------
+
+app-routing.module.ts
+-----------------------
+
+import { NgModule } from '@angular/core';
+import { Routes, RouterModule } from '@angular/router';
+import { ProductListComponent } from './product-list/product-list.component';
+import { AddProductComponent } from './add-product/add-product.component';
+import { ViewProductComponent } from './view-product/view-product.component';
+import { EditProductComponent } from './edit-product/edit-product.component';
+
+const routes: Routes = [
+  {path:'products',component:ProductListComponent},
+  {path:'products/add',component : AddProductComponent},
+  {path:'products/view/:id',component : ViewProductComponent},
+  {path:'products/edit/:id',component : EditProductComponent},
+  {path : '**', component : ProductListComponent}
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+
+
+-------------------------------------------------------------------------------------------------------
+
+AppComponent.ts
+-----------------------
+
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  title = 'angularapp';
+}
+
+-------------------------------------------------------------------------------------------------------
+
+AppComponent.html
+-----------------------
+<h1>Product Management System</h1>
+<div class="container">
+  <router-outlet></router-outlet>
+</div>
+-------------------------------------------------------------------------------------------------------
+
